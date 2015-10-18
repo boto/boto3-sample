@@ -302,7 +302,7 @@ class AutoTranscode(object):
         role = self.iam.create_role(
             RoleName=self.role_name,
             AssumeRolePolicyDocument=json.dumps(self.basic_role_policy))
-        role.RolePolicy('more-permissions').put(
+        self.iam.RolePolicy(self.role_name, 'more-permissions').put(
             PolicyDocument=json.dumps(self.more_permissions_policy))
         return role
 
