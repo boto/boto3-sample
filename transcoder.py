@@ -275,7 +275,7 @@ class AutoTranscode(object):
         call ``HeadBucket`` on it, otherwise ``False``.
         """
         try:
-            self.s3.meta['client'].head_bucket(Bucket=bucket_name)
+            self.s3.meta.client.head_bucket(Bucket=bucket_name)
             return True
         except ClientError:
             return False
@@ -285,7 +285,7 @@ class AutoTranscode(object):
         Returns ``True`` if an IAM role exists.
         """
         try:
-            self.iam.meta['client'].get_role(
+            self.iam.meta.client.get_role(
                 RoleName=self.role_name)
             return True
         except ClientError:
