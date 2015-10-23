@@ -112,6 +112,7 @@ class AutoTranscode(object):
         'queue_name': 'autotranscode',
         'pipeline_name': 'autotranscode-pipe',
         'poll_interval': 10,
+        'region_name': 'us-west-2',
         'file_pattern': '*.mov'
     }
 
@@ -121,6 +122,7 @@ class AutoTranscode(object):
                  topic_name='autotranscode-complete',
                  queue_name='autotranscode',
                  pipeline_name='autotranscode-pipe', poll_interval=10,
+                 region_name='us-west-2',
                  file_pattern='*.mov'):
         super(AutoTranscode, self).__init__()
 
@@ -137,6 +139,7 @@ class AutoTranscode(object):
         self.topic_name = topic_name
         self.queue_name = queue_name
         self.pipeline_name = pipeline_name
+        self.region_name = region_name
         self.role_arn = None
         self.topic_arn = None
         self.queue_arn = None
@@ -152,9 +155,9 @@ class AutoTranscode(object):
 
         self.s3 = boto3.resource('s3')
         self.iam = boto3.resource('iam')
-        self.sns = boto3.resource('sns')
-        self.sqs = boto3.resource('sqs')
-        self.transcoder = boto3.client('elastictranscoder')
+        self.sns = boto3.resource('sns', self.region_name)
+        self.sqs = boto3.resource('sqs', self.region_name)
+        self.transcoder = boto3.client('elastictranscoder', self.region_name)
 
     @classmethod
     def load_from_config(cls, config_filepath):
@@ -275,7 +278,7 @@ class AutoTranscode(object):
         call ``HeadBucket`` on it, otherwise ``False``.
         """
         try:
-            self.s3.meta['client'].head_bucket(Bucket=bucket_name)
+            self.s3.meta.client.head_bucket(Bucket=bucket_name)
             return True
         except ClientError:
             return False
@@ -285,7 +288,7 @@ class AutoTranscode(object):
         Returns ``True`` if an IAM role exists.
         """
         try:
-            self.iam.meta['client'].get_role(
+            self.iam.meta.client.get_role(
                 RoleName=self.role_name)
             return True
         except ClientError:
@@ -299,7 +302,7 @@ class AutoTranscode(object):
         role = self.iam.create_role(
             RoleName=self.role_name,
             AssumeRolePolicyDocument=json.dumps(self.basic_role_policy))
-        role.RolePolicy('more-permissions').put(
+        self.iam.RolePolicy(self.role_name, 'more-permissions').put(
             PolicyDocument=json.dumps(self.more_permissions_policy))
         return role
 
